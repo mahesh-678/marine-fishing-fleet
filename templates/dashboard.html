@@ -1,18 +1,67 @@
-{% extends 'base.html' %}{% block title %}Dashboard · Marine Fleet Monitor{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Operations Overview · Marine Fleet Monitor{% endblock %}
 {% block content %}
-<div class="page-heading"><div><p class="eyebrow">FLEET OVERVIEW</p><h1>Good day, {{ current_user.username }}.</h1><p class="muted">A live overview of registered vessels, fishing activity and safety records.</p></div><div class="heading-actions"><a href="{{ url_for('trips') }}" class="btn btn-primary">＋ Record a trip</a><a href="{{ url_for('alerts') }}" class="btn btn-light">Review alerts</a></div></div>
-<div class="row g-3 mb-4">
- <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-top"><span class="metric-label">Registered boats</span><span class="metric-icon sea">⌁</span></div><div class="metric-value">{{ total_boats }}</div><div class="metric-foot">All vessel statuses</div></div></div>
- <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-top"><span class="metric-label">Active trips</span><span class="metric-icon blue">↗</span></div><div class="metric-value">{{ active_trips }}</div><div class="metric-foot">Planned or currently at sea</div></div></div>
- <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-top"><span class="metric-label">Open alerts</span><span class="metric-icon orange">!</span></div><div class="metric-value">{{ open_alerts }}</div><div class="metric-foot">Require review or resolution</div></div></div>
- <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-top"><span class="metric-label">Total recorded catch</span><span class="metric-icon purple">◉</span></div><div class="metric-value">{{ '%.1f'|format(total_catch) }}<small> kg</small></div><div class="metric-foot">Across all logged trips</div></div></div>
+<div class="dashboard-hero">
+  <div class="hero-copy">
+    <div class="hero-kicker"><span class="hero-kicker-dot"></span> MARINE OPERATIONS <span class="hero-tag">LIVE DATABASE</span></div>
+    <h1>Marine Operations <span>Overview</span></h1>
+    <p>Monitor fleet activity, fishing operations, marine zones, and safety alerts from one workspace.</p>
+  </div>
+  <div class="hero-actions">
+    <a href="{{ url_for('trips') }}" class="btn btn-primary"><span class="button-plus">＋</span> Record a trip</a>
+    <a href="{{ url_for('alerts') }}" class="btn btn-outline-soft">Review alerts <span aria-hidden="true">↗</span></a>
+  </div>
 </div>
-<div class="row g-3 mb-4"><div class="col-12 col-xl-7"><section class="panel h-100"><div class="panel-heading"><div><h2>Catch by species</h2><p>Recorded catch quantity in kilograms</p></div><a href="{{ url_for('reports') }}" class="text-link">View reports →</a></div><div class="chart-wrap"><canvas id="speciesChart"></canvas></div></section></div><div class="col-12 col-xl-5"><section class="panel h-100"><div class="panel-heading"><div><h2>Marine activity map</h2><p>Recorded trip points and configured zone markers</p></div></div><div id="fleetMap" class="map-box"></div></section></div></div>
-<div class="row g-3"><div class="col-12 col-xl-7"><section class="panel"><div class="panel-heading"><div><h2>Recent fishing trips</h2><p>Latest registered trip activity</p></div><a href="{{ url_for('trips') }}" class="text-link">All trips →</a></div><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Boat / captain</th><th>Departure</th><th>Port</th><th>Status</th></tr></thead><tbody>{% for t in recent_trips %}<tr><td><strong>{{ t.boat.boat_name }}</strong><small class="d-block muted">{{ t.captain.full_name }}</small></td><td>{{ t.departure_time.strftime('%d %b %Y, %H:%M') }}</td><td>{{ t.departure_port }}</td><td><span class="status status-{{ t.status }}">{{ t.status|replace('_',' ') }}</span></td></tr>{% else %}<tr><td colspan="4" class="empty-state">No trips yet.</td></tr>{% endfor %}</tbody></table></div></section></div>
-<div class="col-12 col-xl-5"><section class="panel"><div class="panel-heading"><div><h2>Safety alerts</h2><p>Most recently recorded alerts</p></div><a href="{{ url_for('alerts') }}" class="text-link">All alerts →</a></div><div class="alert-list">{% for a in recent_alerts %}<div class="alert-row"><span class="alert-severity severity-{{ a.severity }}"></span><div class="flex-grow-1"><div class="d-flex justify-content-between gap-2"><strong>{{ a.alert_type|replace('_',' ')|title }}</strong><span class="status status-{{ a.status }}">{{ a.status }}</span></div><p>{{ a.message }}</p><small class="muted">Trip #{{ a.trip_id }} · {{ a.created_at.strftime('%d %b %Y') if a.created_at else '—' }}</small></div></div>{% else %}<div class="empty-state">No safety alerts recorded.</div>{% endfor %}</div></section></div></div>
+
+<div class="metric-grid mb-4">
+  <div class="metric-card"><div class="metric-top"><span class="metric-label">TOTAL FISHERMEN</span><span class="metric-icon sea"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"/></svg></span></div><div class="metric-value">{{ total_fishermen }}</div><div class="metric-foot">Registered in the fleet directory</div><div class="metric-spark spark-sea"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="metric-card"><div class="metric-top"><span class="metric-label">REGISTERED BOATS</span><span class="metric-icon blue"><svg viewBox="0 0 24 24"><path d="m3 17 2-7h14l2 7-9 4-9-4ZM8 10V5h8v5M12 5V2"/></svg></span></div><div class="metric-value">{{ total_boats }}</div><div class="metric-foot">Across all vessel statuses</div><div class="metric-spark spark-blue"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="metric-card"><div class="metric-top"><span class="metric-label">ACTIVE TRIPS</span><span class="metric-icon green"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 5H18a3 3 0 0 1 0 6H6a3 3 0 0 0 0 6h9.5"/></svg></span></div><div class="metric-value">{{ active_trips }}</div><div class="metric-foot">Planned or currently at sea</div><div class="metric-spark spark-green"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="metric-card"><div class="metric-top"><span class="metric-label">TOTAL RECORDED CATCH</span><span class="metric-icon amber"><svg viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><path d="m3 12-2-4v8l2-4ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg></span></div><div class="metric-value">{{ '%.1f'|format(total_catch) }}<small>kg</small></div><div class="metric-foot">Across all logged trips</div><div class="metric-spark spark-amber"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="metric-card"><div class="metric-top"><span class="metric-label">OPEN SAFETY ALERTS</span><span class="metric-icon red"><svg viewBox="0 0 24 24"><path d="M12 3 4 6v5c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-3Z"/><path d="M12 8v4M12 16h.01"/></svg></span></div><div class="metric-value">{{ open_alerts }}</div><div class="metric-foot">Require review or resolution</div><div class="metric-spark spark-red"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+  <div class="metric-card"><div class="metric-top"><span class="metric-label">MONITORED ZONES</span><span class="metric-icon sea"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg></span></div><div class="metric-value">{{ monitored_zones }}</div><div class="metric-foot">Active configured zone markers</div><div class="metric-spark spark-sea"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+</div>
+
+<div class="row g-3 dashboard-panels mb-3">
+  <div class="col-12 col-xxl-7"><section class="panel h-100">
+    <div class="panel-heading"><div><h2>Catch distribution</h2><p>Recorded catch quantity by species · kilograms</p></div><a href="{{ url_for('reports') }}" class="text-link">View reports <span aria-hidden="true">→</span></a></div>
+    <div class="chart-wrap chart-wrap-tall"><canvas id="speciesChart" aria-label="Recorded catch quantity by fish species" role="img"></canvas></div>
+    {% if not chart_labels %}<div class="chart-empty-note">No catch data has been recorded yet. The chart will populate as records are added.</div>{% endif %}
+  </section></div>
+  <div class="col-12 col-xxl-5"><section class="panel h-100">
+    <div class="panel-heading"><div><h2>Marine zone monitor</h2><p>Configured zones and recorded trip coordinates</p></div><span class="panel-live-badge"><i></i> ZONE CHECKS</span></div>
+    <div id="fleetMap" class="map-box"></div>
+    <p class="map-note">This map shows configured zones and trip coordinates recorded in the system; it is not a live GPS feed.</p>
+  </section></div>
+</div>
+
+<div class="row g-3 dashboard-panels">
+  <div class="col-12 col-xxl-7"><section class="panel">
+    <div class="panel-heading"><div><h2>Recent fishing trips</h2><p>Latest registered trip activity</p></div><a href="{{ url_for('trips') }}" class="text-link">All trips <span aria-hidden="true">→</span></a></div>
+    <div class="table-responsive"><table class="table align-middle"><thead><tr><th>Boat / captain</th><th>Departure</th><th>Port</th><th>Status</th></tr></thead><tbody>
+      {% for t in recent_trips %}<tr><td><strong>{{ t.boat.boat_name }}</strong><small class="d-block muted">{{ t.captain.full_name }}</small></td><td>{{ t.departure_time.strftime('%d %b %Y, %H:%M') }}</td><td>{{ t.departure_port }}</td><td><span class="status status-{{ t.status }}">{{ t.status|replace('_',' ') }}</span></td></tr>{% else %}<tr><td colspan="4" class="empty-state">No trips have been recorded yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section></div>
+  <div class="col-12 col-xxl-5"><section class="panel h-100">
+    <div class="panel-heading"><div><h2>Safety alerts</h2><p>Most recently recorded alerts</p></div><a href="{{ url_for('alerts') }}" class="text-link">All alerts <span aria-hidden="true">→</span></a></div>
+    <div class="alert-list">{% for a in recent_alerts %}<div class="alert-row"><span class="alert-severity severity-{{ a.severity }}"></span><div class="flex-grow-1"><div class="d-flex justify-content-between align-items-start gap-2"><strong>{{ a.alert_type|replace('_',' ')|title }}</strong><span class="status status-{{ a.status }}">{{ a.status }}</span></div><p>{{ a.message }}</p><small class="muted">Trip #{{ a.trip_id }} · {{ a.created_at.strftime('%d %b %Y') if a.created_at else '—' }}</small></div></div>{% else %}<div class="empty-state">No safety alerts recorded.</div>{% endfor %}</div>
+  </section></div>
+</div>
 {% endblock %}
-{% block scripts %}<script>
-const speciesLabels = {{ chart_labels|tojson }}; const speciesValues = {{ chart_values|tojson }};
-const ctx = document.getElementById('speciesChart'); if (ctx) new Chart(ctx, {type:'bar',data:{labels:speciesLabels,datasets:[{label:'Catch (kg)',data:speciesValues,borderRadius:7,backgroundColor:'rgba(20, 137, 151, .78)',maxBarThickness:42}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'#edf1f5'}},x:{grid:{display:false}}}}});
-if (document.getElementById('fleetMap')) initFleetMap('/api/map-data');
-</script>{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const speciesLabels = {{ chart_labels|tojson }};
+  const speciesValues = {{ chart_values|tojson }};
+  const canvas = document.getElementById('speciesChart');
+  if (canvas && window.Chart) {
+    new Chart(canvas, {
+      type: 'bar',
+      data: { labels: speciesLabels, datasets: [{ label: 'Catch (kg)', data: speciesValues, borderRadius: 6, backgroundColor: 'rgba(25, 198, 180, .78)', hoverBackgroundColor: '#19c6b4', maxBarThickness: 42 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { backgroundColor: '#102840', titleColor: '#f4f8fc', bodyColor: '#b8c9d8', borderColor: 'rgba(144,177,202,.22)', borderWidth: 1 } }, scales: { y: { beginAtZero: true, ticks: { color: '#7894aa' }, grid: { color: 'rgba(132,164,190,.13)' }, border: { display: false } }, x: { ticks: { color: '#7894aa' }, grid: { display: false }, border: { display: false } } } }
+    });
+  }
+  if (document.getElementById('fleetMap') && typeof initFleetMap === 'function') initFleetMap('/api/map-data');
+})();
+</script>
+{% endblock %}

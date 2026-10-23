@@ -1,4 +1,25 @@
-{% extends 'base.html' %}{% block title %}Sign in · Marine Fleet Monitor{% endblock %}
-{% block content %}<div class="login-card"><div class="login-icon">≈</div><p class="eyebrow">MARINE FLEET MONITOR</p><h1>Welcome aboard.</h1><p class="muted mb-4">Sign in to manage fleet activity and safety records.</p>
-<form method="post"><div class="mb-3"><label class="form-label" for="username">Username</label><input class="form-control form-control-lg" id="username" name="username" required autocomplete="username" autofocus></div><div class="mb-4"><label class="form-label" for="password">Password</label><input class="form-control form-control-lg" type="password" id="password" name="password" required autocomplete="current-password"></div><button class="btn btn-primary btn-lg w-100">Sign in <span aria-hidden="true">→</span></button></form>
-</div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Sign in · Marine Fleet Monitor{% endblock %}
+{% block content %}
+<div class="login-layout">
+  <section class="login-visual" aria-label="Marine Fleet introduction">
+    <div class="login-brand"><span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M4 18.5c3.1 0 3.1-2.8 6.2-2.8s3.1 2.8 6.2 2.8 3.1-2.8 6.2-2.8 3.1 2.8 5.4 2.8M4 24c3.1 0 3.1-2.8 6.2-2.8s3.1 2.8 6.2 2.8 3.1-2.8 6.2-2.8 3.1 2.8 5.4 2.8M16 3.5v8M11.5 8l4.5 3.5L20.5 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>Marine Fleet<small>OPERATIONS CONSOLE</small></span></div>
+    <p class="eyebrow">MARITIME OPERATIONS PLATFORM</p>
+    <h1>Navigate with<br><span>clarity & confidence.</span></h1>
+    <p>One workspace for fleet records, fishing activity and marine safety monitoring—designed to keep operations organized and visible.</p>
+    <div class="login-feature-list"><span><i>✓</i> Fleet and vessel records in one place</span><span><i>✓</i> Trip activity and catch reporting</span><span><i>✓</i> Configured zone checks and safety alerts</span></div>
+  </section>
+  <section class="login-card">
+    <div class="login-icon" aria-hidden="true">≈</div>
+    <p class="eyebrow">SECURE ACCESS</p>
+    <h1>Welcome aboard.</h1>
+    <p class="muted">Sign in to continue to your marine operations workspace.</p>
+    <form method="post" autocomplete="on">
+      <div class="mb-3"><label class="form-label" for="username">Username</label><input class="form-control" id="username" name="username" required autocomplete="username" autofocus placeholder="Enter your username"></div>
+      <div class="mb-4"><label class="form-label" for="password">Password</label><input class="form-control" type="password" id="password" name="password" required autocomplete="current-password" placeholder="Enter your password"></div>
+      <button class="btn btn-primary btn-lg w-100" type="submit">Sign in <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="login-footnote">Access is restricted to authorized fleet management users.</p>
+  </section>
+</div>
+{% endblock %}

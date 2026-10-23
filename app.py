@@ -32,7 +32,14 @@ else:
     )
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True}
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'connect_args': {
+        'ssl': {
+            'ca': os.getenv('DB_SSL_CA')
+        } if os.getenv('DB_SSL_CA') else {}
+    }
+}
 
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
@@ -230,17 +237,20 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    total_fishermen = Fisherman.query.count()
     total_boats = Boat.query.count()
     active_trips = FishingTrip.query.filter(FishingTrip.status.in_(['planned', 'at_sea'])).count()
     open_alerts = SafetyAlert.query.filter(SafetyAlert.status != 'resolved').count()
+    monitored_zones = MarineZone.query.filter_by(active=True).count()
     total_catch = db.session.query(func.coalesce(func.sum(CatchRecord.quantity_kg), 0)).scalar() or 0
     recent_alerts = SafetyAlert.query.order_by(SafetyAlert.created_at.desc()).limit(6).all()
     recent_trips = FishingTrip.query.order_by(FishingTrip.departure_time.desc()).limit(6).all()
     species_rows = db.session.query(FishSpecies.common_name, func.coalesce(func.sum(CatchRecord.quantity_kg), 0).label('kg')).outerjoin(CatchRecord, CatchRecord.species_id == FishSpecies.id).group_by(FishSpecies.id, FishSpecies.common_name).order_by(func.sum(CatchRecord.quantity_kg).desc()).all()
     chart_labels = [r[0] for r in species_rows]
     chart_values = [float(r[1] or 0) for r in species_rows]
-    return render_template('dashboard.html', total_boats=total_boats, active_trips=active_trips,
-                           open_alerts=open_alerts, total_catch=float(total_catch), recent_alerts=recent_alerts,
+    return render_template('dashboard.html', total_fishermen=total_fishermen, total_boats=total_boats,
+                           active_trips=active_trips, open_alerts=open_alerts, monitored_zones=monitored_zones,
+                           total_catch=float(total_catch), recent_alerts=recent_alerts,
                            recent_trips=recent_trips, chart_labels=chart_labels, chart_values=chart_values)
 
 

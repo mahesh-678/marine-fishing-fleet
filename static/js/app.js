@@ -33,3 +33,34 @@ async function initFleetMap(endpoint) {
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 }
+
+// Responsive sidebar: preserves ordinary Flask page navigation and form submissions.
+(() => {
+  const body = document.body;
+  const toggle = document.getElementById('menuToggle');
+  const backdrop = document.getElementById('sidebarBackdrop');
+  const sidebar = document.getElementById('appSidebar');
+  const closeMenu = () => {
+    body.classList.remove('sidebar-open');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+  };
+  if (toggle && sidebar) {
+    toggle.addEventListener('click', () => {
+      const open = !body.classList.contains('sidebar-open');
+      body.classList.toggle('sidebar-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+  }
+  if (backdrop) backdrop.addEventListener('click', closeMenu);
+  if (sidebar) sidebar.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+  window.addEventListener('resize', () => { if (window.innerWidth > 991) closeMenu(); });
+
+  const dateLabel = document.getElementById('localDateLabel');
+  if (dateLabel) {
+    try {
+      dateLabel.textContent = new Intl.DateTimeFormat(undefined, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date()).toUpperCase();
+    } catch (_error) {
+      dateLabel.textContent = 'OPERATIONS ONLINE';
+    }
+  }
+})();

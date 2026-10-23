@@ -1,34 +1,90 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071426">
   <title>{% block title %}Marine Fleet Monitor{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
   <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% if current_user.is_authenticated %}app-authenticated{% else %}public-page{% endif %}">
 {% if current_user.is_authenticated %}
-<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
- <div class="container-fluid px-lg-4"><a class="navbar-brand fw-bold" href="{{ url_for('dashboard') }}"><span class="brand-mark">≈</span> Marine Fleet <span class="brand-sub">MONITOR</span></a>
- <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav"><span class="navbar-toggler-icon"></span></button>
- <div class="collapse navbar-collapse" id="nav"><ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
- <li class="nav-item"><a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a></li><li class="nav-item"><a class="nav-link" href="{{ url_for('boats') }}">Boats</a></li><li class="nav-item">
-    <a class="nav-link" href="{{ url_for('fishermen') }}">Fishermen / Owners</a>
-</li><li class="nav-item"><a class="nav-link" href="{{ url_for('trips') }}">Fishing trips</a></li><li class="nav-item"><a class="nav-link" href="{{ url_for('catches') }}">Catch records</a></li><li class="nav-item"><a class="nav-link" href="{{ url_for('zones') }}">Marine zones</a></li><li class="nav-item"><a class="nav-link" href="{{ url_for('alerts') }}">Safety alerts</a></li><li class="nav-item"><a class="nav-link" href="{{ url_for('reports') }}">Reports</a></li>
- <li class="nav-item ms-lg-2"><span class="user-pill">{{ current_user.username }} · {{ current_user.role }}</span></li><li class="nav-item"><a class="btn btn-sm btn-outline-light ms-lg-2" href="{{ url_for('logout') }}">Sign out</a></li>
- </ul></div></div>
-</nav>
+{% set page_titles = {
+  'dashboard': 'Operations Overview',
+  'fishermen': 'Fishermen & Owners',
+  'boats': 'Boat Registry',
+  'trips': 'Fishing Trips',
+  'catches': 'Catch Records',
+  'zones': 'Marine Zones',
+  'alerts': 'Safety Alerts',
+  'reports': 'Reports & Analytics'
+} %}
+<div class="app-shell">
+  <aside class="app-sidebar" id="appSidebar" aria-label="Main navigation">
+    <a class="sidebar-brand" href="{{ url_for('dashboard') }}">
+      <span class="brand-symbol" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M4 18.5c3.1 0 3.1-2.8 6.2-2.8s3.1 2.8 6.2 2.8 3.1-2.8 6.2-2.8 3.1 2.8 5.4 2.8M4 24c3.1 0 3.1-2.8 6.2-2.8s3.1 2.8 6.2 2.8 3.1-2.8 6.2-2.8 3.1 2.8 5.4 2.8M16 3.5v8M11.5 8l4.5 3.5L20.5 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      <span class="brand-copy"><strong>Marine Fleet</strong><small>OPERATIONS CONSOLE</small></span>
+    </a>
+
+    <div class="sidebar-section-label">WORKSPACE</div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></span><span>Overview</span></a>
+      {% if current_user.role in ('admin', 'organizer') %}
+      <a class="sidebar-link {% if request.endpoint == 'fishermen' %}active{% endif %}" href="{{ url_for('fishermen') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM20 8v6M23 11h-6"/></svg></span><span>Fishermen & owners</span></a>
+      <a class="sidebar-link {% if request.endpoint == 'boats' %}active{% endif %}" href="{{ url_for('boats') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3 17 2-7h14l2 7-9 4-9-4ZM8 10V5h8v5M12 5V2M3 17c1.4 1.1 2.8 1.1 4.5 0s3.1-1.1 4.5 0 2.8 1.1 4.5 0 3.1-1.1 4.5 0"/></svg></span><span>Boats</span></a>
+      <a class="sidebar-link {% if request.endpoint == 'trips' %}active{% endif %}" href="{{ url_for('trips') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.5 5H18a3 3 0 0 1 0 6H6a3 3 0 0 0 0 6h9.5"/></svg></span><span>Fishing trips</span></a>
+      <a class="sidebar-link {% if request.endpoint == 'catches' %}active{% endif %}" href="{{ url_for('catches') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z"/><path d="m3 12-2-4v8l2-4ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"/></svg></span><span>Catch records</span></a>
+      <a class="sidebar-link {% if request.endpoint == 'zones' %}active{% endif %}" href="{{ url_for('zones') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg></span><span>Marine zones</span></a>
+      {% endif %}
+      <a class="sidebar-link {% if request.endpoint == 'alerts' %}active{% endif %}" href="{{ url_for('alerts') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></span><span>Safety alerts</span></a>
+      <a class="sidebar-link {% if request.endpoint == 'reports' %}active{% endif %}" href="{{ url_for('reports') }}"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M8 15l4-4 3 3 6-7"/></svg></span><span>Reports & analytics</span></a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-safety-card"><span class="safety-pulse"></span><div><strong>Safety monitoring</strong><small>Trip checks enabled</small></div></div>
+      <div class="sidebar-user"><span class="avatar-mark">{{ current_user.username[:1]|upper }}</span><span class="user-copy"><strong>{{ current_user.username }}</strong><small>{{ current_user.role|title }}</small></span><a class="user-logout" href="{{ url_for('logout') }}" aria-label="Sign out" title="Sign out"><svg viewBox="0 0 24 24"><path d="M10 17l5-5-5-5M15 12H3M21 3v18"/></svg></a></div>
+    </div>
+  </aside>
+
+  <button class="sidebar-backdrop" id="sidebarBackdrop" type="button" aria-label="Close navigation"></button>
+
+  <div class="app-workspace">
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle" type="button" aria-label="Open navigation" aria-controls="appSidebar" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div class="topbar-heading"><span>MARINE FLEET <span class="crumb-separator">/</span> OPERATIONS</span><strong>{{ page_titles.get(request.endpoint, 'Marine Operations') }}</strong></div>
+      </div>
+      <div class="topbar-right">
+        <a class="topbar-icon-link" href="{{ url_for('alerts') }}" aria-label="Open safety alerts" title="Safety alerts"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></a>
+        <div class="topbar-divider"></div>
+        <div class="topbar-date"><span class="date-pulse"></span><span id="localDateLabel">OPERATIONS ONLINE</span></div>
+      </div>
+    </header>
+    <main class="app-main container-fluid">
+{% else %}
+  <main class="public-main">
 {% endif %}
-<main class="{% if current_user.is_authenticated %}container-fluid px-3 px-lg-4 py-4{% else %}login-shell{% endif %}">
-{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>{% endfor %}</div>{% endif %}{% endwith %}
+{% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="flash-stack {% if not current_user.is_authenticated %}public-flashes{% endif %}">{% for category, message in messages %}<div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">{{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button></div>{% endfor %}</div>{% endif %}{% endwith %}
 {% block content %}{% endblock %}
-</main>
-<footer class="footer"><span>Marine Fleet Monitor</span><span>© {{ current_year }} · Marine Fleet Monitor</span></footer>
+{% if current_user.is_authenticated %}
+    </main>
+    <footer class="app-footer"><span><span class="footer-brand-dot"></span> Marine Fleet Monitor</span><span>© {{ current_year }} · Built for safer marine operations</span></footer>
+  </div>
+</div>
+{% else %}
+    <div class="public-footer">MARINE FLEET <span>·</span> OPERATIONS CONSOLE</div>
+  </main>
+{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 {% block scripts %}{% endblock %}
-</body></html>
+</body>
+</html>
